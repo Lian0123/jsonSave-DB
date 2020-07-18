@@ -1,0 +1,27 @@
+{
+  "name": "jsonsave-db",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node ./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lian0123/jsonSave-DB.git"
+  },
+  "dependencies": {
+    "js-sha256": "^0.9.0",
+    "jest": "^26.1.0"
+  },
+  "keywords": [
+    "database"
+  ],
+  "author": "lian0123",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Lian0123/jsonSave-DB/issues"
+  },
+  "homepage": "https://github.com/Lian0123/jsonSave-DB#readme"
+}
