@@ -2,7 +2,7 @@ import * as fs    from "fs";
 import * as path  from "path";
 import * as fDate from "./formateDate";
 import * as config from "./config.js";
-import Worker from "worker_threads";
+import { Worker } from "worker_threads";
 
 
 export type dbLink                = fs.PathLike;
@@ -21,15 +21,26 @@ export type tableConfig            = object;
 
 export type insertTableDataOption = object;
 
-export type updateTableDataOption = object;
+export type updateTableDataOption = {
+    type :string, 
+};
 
-export type deleteTableDataOption = object;
+export type deleteTableDataOption = {
+    type :string, 
+};
 
-export type searchTableDataOption = object;
+export type searchTableDataOption = {
+    type :string, 
+};
 
 export type dbInfoOption          = {
     onlyInfo?: object,
     onlyUser?: object,
+};
+
+type retrunSearchType = {
+    frameId :number,
+    info    :Array<{rowId:number,data:any}>,
 };
 
 export type userListType          = {
@@ -127,7 +138,7 @@ export class coreDB {
         };
 
         /* ----------------- Start Test Is Formate Database ----------------- */
-        if(fs.existsSync(config.path.savePath+dbName)){
+        if(fs.existsSync(path.join(config.path.savePath,dbName))){
             throw new Error(`The Database Name \"`+dbName+`\" Is Be Used`);
         }
         /* ----------------- End   Test Is Formate Database ----------------- */
@@ -139,8 +150,8 @@ export class coreDB {
 
 
         /* ----------------- Start Create Database ----------------- */
-        fs.mkdirSync(config.path.savePath+dbName);
-        fs.writeFileSync(config.path.savePath+dbName+`/db.json`,JSON.stringify(dbJson, null, 4));
+        fs.mkdirSync(path.join(config.path.savePath,dbName));
+        fs.writeFileSync(path.join(config.path.savePath,dbName,`db.json`),JSON.stringify(dbJson, null, 4));
         /* ----------------- Start Create Database ----------------- */
     }
 
@@ -148,15 +159,15 @@ export class coreDB {
         let dbJson :dbJsonType = {};
 
         /* ----------------- Start Test Is Formate Database ----------------- */
-        if(!fs.existsSync(config.path.savePath+dbOldName)){
+        if(!fs.existsSync(path.join(config.path.savePath,dbOldName))){
             throw new Error(`The Database Name \"`+dbNewName+`\" Was Not Created`);
         }
 
-        if(fs.existsSync(config.path.savePath+dbNewName)){
+        if(fs.existsSync(path.join(config.path.savePath,dbNewName))){
             throw new Error(`The Database Name \"`+dbNewName+`\" Is Be Used`);
         }
         
-        dbJson = JSON.parse(String(fs.readFileSync(config.path.savePath+dbOldName+`/db.json`)));
+        dbJson = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbOldName,`db.json`))));
         if(dbJson.database !== dbOldName){
             throw new Error(`Not Found Select Database Of \"`+dbOldName+`\" Of db.json`);
         }
@@ -164,9 +175,9 @@ export class coreDB {
 
         
         /* ----------------- Start Update Database ----------------- */
-        fs.renameSync(config.path.savePath+dbOldName, config.path.savePath+dbNewName);
+        fs.renameSync(path.join(config.path.savePath,dbOldName), path.join(config.path.savePath,dbNewName));
         dbJson.database = dbNewName;        
-        fs.writeFileSync(config.path.savePath+dbNewName+`/db.json`, JSON.stringify(dbJson, null, 4));
+        fs.writeFileSync(path.join(config.path.savePath,dbNewName,`db.json`), JSON.stringify(dbJson, null, 4));
         /* ----------------- End   Update Database ----------------- */
 
     }
@@ -176,11 +187,11 @@ export class coreDB {
         let fsOption :fs.RmDirOptions = {};
 
         /* ----------------- Start Test Is Formate Database ----------------- */
-        if(fs.existsSync(config.path.savePath+dbName)){
+        if(fs.existsSync(path.join(config.path.savePath,dbName))){
             throw new Error(`The Database Name \"`+dbName+`\" Is Be Used`);
         }
 
-        dbJson = JSON.parse(String(fs.readFileSync(config.path.savePath+dbName+`/db.json`)));
+        dbJson = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,`db.json`))));
         if(dbJson.database !== dbName){
             throw new Error(`Not Found Select Database Of \"`+dbName+`\" Of db.json`);
         }
@@ -193,10 +204,10 @@ export class coreDB {
 
         /* ----------------- Start Remove Database ----------------- */
         if(fsOption === {}){
-            fs.unlinkSync(config.path.savePath+dbName+"/db.json");
-            fs.rmdirSync(config.path.savePath+dbName);
+            fs.unlinkSync(path.join(config.path.savePath,dbName,"db.json"));
+            fs.rmdirSync(path.join(config.path.savePath,dbName));
         }else{
-            fs.rmdirSync(config.path.savePath+dbName,fsOption);
+            fs.rmdirSync(path.join(config.path.savePath,dbName),fsOption);
         }
         /* ----------------- End   Remove Database ----------------- */
     }
@@ -205,11 +216,11 @@ export class coreDB {
         let dbJson :dbJsonType = {};
 
         /* ----------------- Start Test Is Formate Database ----------------- */
-        if(fs.existsSync(config.path.savePath+dbName)){
+        if(fs.existsSync(path.join(config.path.savePath,dbName))){
             throw new Error(`The Database Name \"`+dbName+`\" Is Be Used`);
         }
 
-        dbJson = JSON.parse(String(fs.readFileSync(config.path.savePath+dbName+`/db.json`)));
+        dbJson = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,`db.json`))));
         if(dbJson.database !== dbName){
             throw new Error(`Not Found Select Database Of \"`+dbName+`\" Of db.json`);
         }
@@ -227,11 +238,11 @@ export class coreDB {
         let dbJson :dbJsonType = {};
         
         /* ----------------- Start Test Is Formate Database ----------------- */
-        if(fs.existsSync(config.path.savePath+dbName)){
+        if(fs.existsSync(path.join(config.path.savePath,dbName))){
             throw new Error(`The Database Name \"`+dbName+`\" Is Be Used`);
         }
 
-        dbJson = JSON.parse(String(fs.readFileSync(config.path.savePath+dbName+`/db.json`)));
+        dbJson = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,`db.json`))));
         if(dbJson.database !== dbName){
             throw new Error(`Not Found Select Database Of \"`+dbName+`\" Of db.json`);
         }
@@ -254,7 +265,7 @@ export class coreDB {
 
 
         /* ----------------- Start Rewrite Database db.json----------------- */
-        fs.writeFileSync(config.path.savePath+dbName+`/db.json`, JSON.stringify(dbJson, null, 4));
+        fs.writeFileSync(path.join(config.path.savePath,dbName,`db.json`), JSON.stringify(dbJson, null, 4));
         /* ----------------- End   Rewrite Database db.json----------------- */
     }
 
@@ -276,11 +287,11 @@ export class coreDB {
 
 
         /* ----------------- Start Test Is Formate Database ----------------- */
-        if(!fs.existsSync(config.path.savePath+dbName)){
+        if(!fs.existsSync(path.join(config.path.savePath,dbName))){
             throw new Error(`Not Found Select Database Of \"`+dbName+`\"`);
         }
 
-        dbJson = JSON.parse(String(fs.readFileSync(config.path.savePath+dbName+`/db.json`)));
+        dbJson = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,`db.json`))));
         if(dbJson.database !== dbName){
             throw new Error(`Not Found Select Database Of \"`+dbName+`\" Of db.json`);
         }
@@ -288,7 +299,7 @@ export class coreDB {
         
 
         /* ----------------- Start Test Is Formate Table ----------------- */
-        if(fs.existsSync(config.path.savePath+dbName+`/`+tableName)){
+        if(fs.existsSync(path.join(config.path.savePath,dbName,tableName))){
             throw new Error(`Not Found Select Table Of \"`+tableName+`\"`);
         }else if(dbJson.tableList.indexOf(tableName) > -1){
             throw new Error(`The Table Was Created in \"`+dbName+`\" Of db.json`);
@@ -301,14 +312,14 @@ export class coreDB {
 
 
         /* ----------------- Start Create Table ----------------- */
-        fs.mkdirSync(config.path.savePath+dbName+"/"+tableName);
-        fs.writeFileSync(config.path.savePath+dbName+"/"+tableName+`/table.json`,JSON.stringify(tableJson, null, 4));
+        fs.mkdirSync(path.join(config.path.savePath,dbName,tableName));
+        fs.writeFileSync(path.join(config.path.savePath,dbName,tableName,`table.json`),JSON.stringify(tableJson, null, 4));
         /* ----------------- End   Create Table ----------------- */
 
 
         /* ----------------- Start Update db.json ----------------- */
         dbJson.tableList.push(tableName);
-        fs.writeFileSync(config.path.savePath+dbName+`/db.json`, JSON.stringify(dbJson, null, 4));
+        fs.writeFileSync(path.join(config.path.savePath,dbName,`db.json`), JSON.stringify(dbJson, null, 4));
         /* ----------------- End   Update db.json ----------------- */
     }
 
@@ -317,11 +328,11 @@ export class coreDB {
         let tableJson :TableJsonType = {};
 
         /* ----------------- Start Test Is Formate Database ----------------- */
-        if(!fs.existsSync(config.path.savePath+dbName)){
+        if(!fs.existsSync(path.join(config.path.savePath,dbName))){
             throw new Error(`Not Found Select Database Of \"`+dbName+`\".`);
         }
 
-        dbJson = JSON.parse(String(fs.readFileSync(config.path.savePath+dbName+`/db.json`)));
+        dbJson = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,`db.json`))));
         if(dbJson.database !== dbName){
             throw new Error(`Not Found Select Database Of \"`+dbName+`\" Of db.json`);
         }
@@ -329,15 +340,15 @@ export class coreDB {
 
 
         /* ----------------- Start Test Is Formate Table ----------------- */
-        if(!fs.existsSync(config.path.savePath+dbName+"/"+tableOldName)){
+        if(!fs.existsSync(path.join(config.path.savePath,dbName,tableOldName))){
             throw new Error(`The Database \"`+dbName+`\" Of Table Name \"`+tableOldName+`\" Was Not Created`);
         }
 
-        if(fs.existsSync(config.path.savePath+dbName+"/"+tableNewName)){
+        if(fs.existsSync(path.join(config.path.savePath,dbName,tableNewName))){
             throw new Error(`The Database \"`+dbName+`\" Of Table Name \"`+tableNewName+`\" Is Be Used`);
         }
 
-        tableJson = JSON.parse(String(fs.readFileSync(config.path.savePath+dbName+`/`+tableOldName+`/table.json`)));
+        tableJson = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,tableOldName,`table.json`))));
         if(tableJson.table !== tableOldName){
             throw new Error(`Not Found Select Database \"`+dbName+`\" Table Of \"`+tableOldName+`\" in table.json`);
         }else if(dbJson.tableList.indexOf(tableOldName) < 0){
@@ -350,15 +361,15 @@ export class coreDB {
 
 
         /* ----------------- Start Update Table ----------------- */
-        fs.renameSync(config.path.savePath+dbName+`/`+tableOldName,config.path.savePath+dbName+`/`+tableNewName);
+        fs.renameSync(path.join(config.path.savePath,dbName,tableOldName),path.join(config.path.savePath,dbName,tableNewName));
         tableJson.table = tableNewName;
-        fs.writeFileSync(config.path.savePath+dbName+`/`+tableNewName,JSON.stringify(tableJson, null, 4));
+        fs.writeFileSync(path.join(config.path.savePath,dbName,tableNewName),JSON.stringify(tableJson, null, 4));
         /* ----------------- End   Update Table ----------------- */
         
 
         /* ----------------- Start Update db.json ----------------- */
         dbJson.tableList[dbJson.tableList.indexOf(tableOldName)] = tableNewName;
-        fs.writeFileSync(config.path.savePath+dbName,JSON.stringify(dbJson, null, 4));
+        fs.writeFileSync(path.join(config.path.savePath,dbName),JSON.stringify(dbJson, null, 4));
         /* ----------------- End   Update db.json ----------------- */
     }
 
@@ -369,11 +380,11 @@ export class coreDB {
 
 
         /* ----------------- Start Test Is Formate Database ----------------- */
-        if(!fs.existsSync(config.path.savePath+dbName)){
+        if(!fs.existsSync(path.join(config.path.savePath,dbName))){
             throw new Error(`Not Found Select Database Of \"`+dbName+`\".`);
         }
 
-        dbJson = JSON.parse(String(fs.readFileSync(config.path.savePath+dbName+`/db.json`)));
+        dbJson = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,`db.json`))));
         if(dbJson.database !== dbName){
             throw new Error(`Not Found Select Database Of \"`+dbName+`\" Of db.json`);
         }
@@ -381,11 +392,11 @@ export class coreDB {
 
 
         /* ----------------- Start Test Is Formate Table ----------------- */
-        if(!fs.existsSync(config.path.savePath+dbName+"/"+tableName)){
+        if(!fs.existsSync(path.join(config.path.savePath,dbName,tableName))){
             throw new Error(`The Database \"`+dbName+`\" Of Table Name \"`+tableName+`\" Was Not Created`);
         }
 
-        tableJson = JSON.parse(String(fs.readFileSync(config.path.savePath+dbName+`/`+tableName+`/table.json`)));
+        tableJson = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,tableName,`table.json`))));
         if(tableJson.table !== tableName){
             throw new Error(`Not Found Select Database \"`+dbName+`\" Table Of \"`+tableName+`\" in table.json`);
         }else if(dbJson.tableList.indexOf(tableName) < 0){
@@ -400,10 +411,10 @@ export class coreDB {
 
         /* ----------------- Start Remove table ----------------- */
         if(fsOption === {}){
-            fs.unlinkSync(config.path.savePath+dbName+`/`+tableName+`/table.json`);
-            fs.rmdirSync(config.path.savePath+dbName+`/`+tableName);
+            fs.unlinkSync(path.join(config.path.savePath,dbName,tableName,`table.json`));
+            fs.rmdirSync(path.join(config.path.savePath,dbName,tableName));
         }else{
-            fs.rmdirSync(config.path.savePath+dbName,fsOption);
+            fs.rmdirSync(path.join(config.path.savePath,dbName),fsOption);
         }
         /* ----------------- End   Remove Database ----------------- */
     }
@@ -417,64 +428,87 @@ export class coreDB {
     }
 
     public insertTableData(dbName:string, tableName:string, data:any, option?:insertTableDataOption) :void{
-        let tableFrame :Array<string> = this.getTableFrame(config.path.savePath+dbName+`/`+tableName+`/`);
-        let FrameCount :number        = JSON.parse(String(fs.readFileSync(config.path.savePath+dbName+`/`+tableName+`/table.json`))).fileSize;
+        let tableFrame :Array<string> = this.getTableFrame(path.join(config.path.savePath,dbName,tableName));
+        let FrameCount :number        = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,tableName,`table.json`)))).fileSize;
         let rowData    :Array<any>    = [];
 
         if(tableFrame.length > 0){
-            rowData = JSON.parse(String(fs.readFileSync(config.path.savePath+dbName+`/`+tableName+`/`+tableFrame[tableFrame.length-1]))).data;
+            rowData = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,tableName,tableFrame[tableFrame.length-1])))).data;
             if(rowData.length <= FrameCount){
                 rowData.push(data);
-                fs.writeFileSync(config.path.savePath+dbName+`/`+tableName+`/data_`+(tableFrame.length-1)+`.json`, JSON.stringify(rowData, null, 4));
+                fs.writeFileSync(path.join(config.path.savePath,dbName,tableName,`data_`+(tableFrame.length-1)+`.json`), JSON.stringify({data:[rowData]}, null, 4));
             }else{
-                fs.writeFileSync(config.path.savePath+dbName+`/`+tableName+`/data_`+tableFrame.length+`.json`, JSON.stringify({data:[data]}, null, 4));
+                fs.writeFileSync(path.join(config.path.savePath,dbName,tableName,`data_`+tableFrame.length+`.json`), JSON.stringify({data:[data]}, null, 4));
             }
         }else{
-            fs.writeFileSync(config.path.savePath+dbName+`/`+tableName+`/data_0.json`, JSON.stringify({data:[data]}, null, 4));
+            fs.writeFileSync(path.join(config.path.savePath,dbName,tableName,`data_0.json`), JSON.stringify({data:[data]}, null, 4));
         }
     }
 
     public multInsertTableData(dbName:string, tableName:string, dataArray:Array<any>) :void{
-        let tableFrame :Array<string> = this.getTableFrame(config.path.savePath+dbName+`/`+tableName+`/`);
-        let FrameCount :number        = JSON.parse(String(fs.readFileSync(config.path.savePath+dbName+`/`+tableName+`/table.json`))).fileSize;
+        let tableFrame :Array<string> = this.getTableFrame(path.join(config.path.savePath,dbName,tableName));
+        let FrameCount :number        = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,tableName,`table.json`)))).fileSize;
         let rowData    :Array<any>    = [];
         let cutSum     :number        = 0;
         let offset     :number        = 0;
         if(tableFrame.length > 0){ 
-            rowData = JSON.parse(String(fs.readFileSync(config.path.savePath+dbName+`/`+tableName+`/`+tableFrame[tableFrame.length-1]))).data;
+            rowData = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,tableName,tableFrame[tableFrame.length-1])))).data;
             offset  = FrameCount-rowData.length;
 
             if(offset>0){
                 rowData = rowData.concat(dataArray.slice(0,offset));
                 cutSum  = Math.ceil((dataArray.length-offset)/FrameCount);
-                fs.writeFileSync(config.path.savePath+dbName+`/`+tableName+`/data_`+(tableFrame.length-1)+`.json`, JSON.stringify({data:[rowData]}, null, 4));
+                fs.writeFileSync(path.join(config.path.savePath,dbName,tableName,`data_`+(tableFrame.length-1)+`.json`), JSON.stringify({data:[rowData]}, null, 4));
                 for (let i = 0; i < cutSum; i++) {
-                    fs.writeFileSync(config.path.savePath+dbName+`/`+tableName+`/data_`+(dataArray.length+i)+`.json`, JSON.stringify({data:[dataArray.slice(offset+i*FrameCount,offset+(i+1)*FrameCount)]}, null, 4));
+                    fs.writeFileSync(path.join(config.path.savePath,dbName,tableName,`data_`+(dataArray.length+i)+`.json`), JSON.stringify({data:[dataArray.slice(offset+i*FrameCount,offset+(i+1)*FrameCount)]}, null, 4));
                 }
             }else{
                 rowData = rowData.concat(dataArray);
-                fs.writeFileSync(config.path.savePath+dbName+`/`+tableName+`/data_`+tableFrame.length+`.json`, JSON.stringify({data:[rowData]}, null, 4));
+                fs.writeFileSync(path.join(config.path.savePath,dbName,tableName,`data_`+tableFrame.length+`.json`), JSON.stringify({data:[rowData]}, null, 4));
                 for (let i = 0; i < cutSum; i++) {
-                    fs.writeFileSync(config.path.savePath+dbName+`/`+tableName+`/data_`+i+`.json`, JSON.stringify({data:[dataArray.slice(i*FrameCount,(i+1)*FrameCount)]}, null, 4));
+                    fs.writeFileSync(path.join(config.path.savePath,dbName,tableName,`data_`+i+`.json`), JSON.stringify({data:[dataArray.slice(i*FrameCount,(i+1)*FrameCount)]}, null, 4));
                 }
             }
         }else{
             for (let i = 0; i < cutSum; i++) {
-                fs.writeFileSync(config.path.savePath+dbName+`/`+tableName+`/data_`+i+`.json`, JSON.stringify({data:[dataArray.slice(i*FrameCount,(i+1)*FrameCount)]}, null, 4));
+                fs.writeFileSync(path.join(config.path.savePath,dbName,tableName,`data_`+i+`.json`), JSON.stringify({data:[dataArray.slice(i*FrameCount,(i+1)*FrameCount)]}, null, 4));
             }
         }
     }
 
-    public updateTableData(dbName:string, tableName:string, oldData:any, newData:any, option?:updateTableDataOption) :void{
+    public async updateTableData(dbName:string, tableName:string, oldData:any, newData:any, option?:updateTableDataOption) :Promise<void>{
+        
+        let MatchList :Array<retrunSearchType> = await this.searchTableData(dbName,tableName,oldData);
+        
+        for (let i = 0; i < MatchList.length; i++) {
+            let worker :Worker = new Worker(`./workers/updateWorker.ts`);
+
+            await worker.on('message', function(message){});
+
+            worker.postMessage({dbName:dbName, tableName:tableName, data:newData, frameId:i, option:option.type});
+        }
+
 
     }
     
     public deleteTableData(dbName:string, tableName:string, data:any, option?:deleteTableDataOption) :void{
+        let MatchList = this.searchTableData(dbName,tableName,data);
 
     }
     
-    public searchTableData(dbName:string, tableName:string, data:any, option?:searchTableDataOption) :void{
+    public async searchTableData(dbName:string, tableName:string, data:any, option?:searchTableDataOption) :Promise<Array<retrunSearchType>>{
+        let MatchList  :Array<retrunSearchType> = [];
+        let tableFrame :Array<string>           = this.getTableFrame(path.join(config.path.savePath,dbName,tableName));
         
+        for (let i = 0; i < tableFrame.length; i++) {
+            let worker :Worker = new Worker(`./workers/searchWorker.ts`);
+            await worker.on('message', function(message){
+                MatchList = MatchList.concat(message);
+            });      
+            worker.postMessage({dbName:dbName, tableName:tableName, data:data, frameId:i, option:option.type});
+        }
+        
+        return MatchList;
     }
 
 
@@ -486,6 +520,10 @@ export class coreDB {
         return TableFrame.sort(function(a :string, b :string) :number{
             return Number.parseInt(a.slice(5,a.length-5)) - Number.parseInt(b.slice(5,b.length-5));
         });
+    }
+
+    private resizeTable() {
+        
     }
 
     private testSerach(tablePath:string) :boolean{
