@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
+    "tsc": "tsc ./main/*.ts ./main/workers/*.ts",
     "start": "node ./index.js"
   },
   "repository": {
@@ -23,5 +24,6 @@
   "bugs": {
     "url": "https://github.com/Lian0123/jsonSave-DB/issues"
   },
-  "homepage": "https://github.com/Lian0123/jsonSave-DB#readme"
+  "homepage": "https://github.com/Lian0123/jsonSave-DB#readme",
+  "devDependencies": {}
 }

@@ -1,6 +1,7 @@
 const config = {
     thread     : 1,
     utcLocate  : 0,
+    procLimit  : 2000  ,
     encode     : `utf8`,
     debug      : false ,
     writeLog   : false ,
