@@ -4,7 +4,6 @@ import * as fDate from "./formateDate";
 import * as config from "./config.js";
 import { Worker } from "worker_threads";
 
-
 export type dbLink                = fs.PathLike;
     
 export type dbCreateOption        = fs.Mode;
@@ -196,8 +195,8 @@ export class coreDB {
         let fsOption :fs.RmDirOptions = {};
 
         /* ----------------- Start Test Is Formate Database ----------------- */
-        if(fs.existsSync(path.join(config.path.savePath,dbName))){
-            throw new Error(`The Database Name \"`+dbName+`\" Is Be Used`);
+        if(!fs.existsSync(path.join(config.path.savePath,dbName))){
+            throw new Error(`The Database Name \"`+dbName+`\" Was Not Created`);
         }
 
         dbJson = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,`db.json`))));
@@ -212,11 +211,11 @@ export class coreDB {
 
 
         /* ----------------- Start Remove Database ----------------- */
-        if(fsOption === {}){
+        if(options === {} || options === undefined ){
             fs.unlinkSync(path.join(config.path.savePath,dbName,"db.json"));
             fs.rmdirSync(path.join(config.path.savePath,dbName));
         }else{
-            fs.rmdirSync(path.join(config.path.savePath,dbName),fsOption);
+            fs.rmdirSync(path.join(config.path.savePath,dbName),options);
         }
         /* ----------------- End   Remove Database ----------------- */
     }
@@ -308,8 +307,9 @@ export class coreDB {
         
 
         /* ----------------- Start Test Is Formate Table ----------------- */
-        if(fs.existsSync(path.join(config.path.savePath,dbName,tableName))){
-            throw new Error(`Not Found Select Table Of \"`+tableName+`\"`);
+        if(
+            fs.existsSync(path.join(config.path.savePath,dbName,tableName))){
+            throw new Error(`Not Found Select Table \"`+tableName+`\" Was Created`);
         }else if(dbJson.tableList.indexOf(tableName) > -1){
             throw new Error(`The Table Was Created in \"`+dbName+`\" Of db.json`);
         }
@@ -473,6 +473,7 @@ export class coreDB {
         let rowData    :Array<any>    = [];
         let cutSum     :number        = 0;
         let offset     :number        = 0;
+
         if(tableFrame.length > 0){ 
             rowData = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,tableName,tableFrame[tableFrame.length-1])))).data;
             offset  = FrameCount-rowData.length;
@@ -482,7 +483,7 @@ export class coreDB {
                 cutSum  = Math.ceil((dataArray.length-offset)/FrameCount);
                 fs.writeFileSync(path.join(config.path.savePath,dbName,tableName,`data_`+(tableFrame.length-1)+`.json`), JSON.stringify({data:rowData}, null, 4));
                 for (let i = 0; i < cutSum; i++) {
-                    fs.writeFileSync(path.join(config.path.savePath,dbName,tableName,`data_`+(dataArray.length+i)+`.json`), JSON.stringify({data:dataArray.slice(offset+i*FrameCount,offset+(i+1)*FrameCount)}, null, 4));
+                    fs.writeFileSync(path.join(config.path.savePath,dbName,tableName,`data_`+(tableFrame.length+i)+`.json`), JSON.stringify({data:dataArray.slice(offset+i*FrameCount,offset+(i+1)*FrameCount)}, null, 4));
                 }
             }else{
                 rowData = rowData.concat(dataArray);
@@ -492,6 +493,7 @@ export class coreDB {
                 }
             }
         }else{
+            cutSum  = Math.ceil((dataArray.length-offset)/FrameCount);
             for (let i = 0; i < cutSum; i++) {
                 fs.writeFileSync(path.join(config.path.savePath,dbName,tableName,`data_`+i+`.json`), JSON.stringify({data:dataArray.slice(i*FrameCount,(i+1)*FrameCount)}, null, 4));
             }
@@ -503,7 +505,7 @@ export class coreDB {
         let MatchList :Array<retrunSearchType> = await this.searchTableData(dbName,tableName,oldData);
         
         for (let i = 0; i < MatchList.length; i++) {
-            let worker :Worker = new Worker(`./workers/updateWorker.ts`);
+            let worker :Worker = new Worker(path.join(__dirname,`workers`,`updateWorker.js`));
 
             await worker.on('message', function(message){});
 
@@ -516,7 +518,7 @@ export class coreDB {
     public async deleteTableData(dbName:string, tableName:string, data:any, option?:deleteTableDataOption) :Promise<void>{
         let MatchList = await this.searchTableData(dbName,tableName,data);
         for (let i = 0; i < MatchList.length; i++) {
-            let worker :Worker = new Worker(`./workers/updateWorker.ts`);
+            let worker :Worker = new Worker(path.join(__dirname,`workers`,`updateWorker.js`));
 
             await worker.on('message', function(message){});
 
@@ -526,16 +528,25 @@ export class coreDB {
     }
     
     public async searchTableData(dbName:string, tableName:string, data:any, option?:searchTableDataOption) :Promise<Array<retrunSearchType>>{
-        let MatchList  :Array<retrunSearchType> = [];
-        let tableFrame :Array<string>           = this.getTableFrame(path.join(config.path.savePath,dbName,tableName));
+        let MatchList    :Array<retrunSearchType> = [];
+        let tableFrame   :Array<string>           = this.getTableFrame(path.join(config.path.savePath,dbName,tableName));
+        let searchOption :string                  = `fullData`;
+
+        if(option !== undefined){
+            searchOption = option.type;
+        }
         
         for (let i = 0; i < tableFrame.length; i++) {
-            let worker :Worker = new Worker(`./workers/searchWorker.ts`);
+            let worker :Worker = new Worker(path.join(__dirname,`workers`,`searchWorker.js`), { workerData: {dbName:dbName, tableName:tableName, data:data, frameId:i, option:searchOption} });
+
             await worker.on('message', function(message){
                 MatchList = MatchList.concat(message);
-            });      
-            worker.postMessage({dbName:dbName, tableName:tableName, data:data, frameId:i, option:option.type});
+                //console.log(MatchList);
+            });
+            
         }
+
+        //console.log(MatchList);
         
         return MatchList;
     }
@@ -639,7 +650,7 @@ export class coreDB {
         return true;
     }
 
-    public execComand(process:dbProcess) :boolean{
+    public execComand(process:dbProcess) :boolean{/*
         if(process.command === `createDB`){
             this.createDB(process.data.dbName,process.data.option);
         }else if(process.command === `renameDB`){
@@ -669,11 +680,11 @@ export class coreDB {
         }else if(process.command === `searchTableData`){
             this.searchTableData(process.data.dbName,process.data.tableName,process.data.data,process.data.config);
         }
-
+*/
         return true;
     }
 
-    public testIsLock(process:dbProcess) :boolean{
+    public testIsLock(process:dbProcess) :boolean{/*
         if(process.command === `createDB`){
             if(fs.existsSync(path.join(config.path.savePath,process.data.dbName,`.lock`))){
                 return true;
@@ -760,13 +771,13 @@ export class coreDB {
             }else{
                 return false;
             }
-        }
+        }*/
 
         return true;
 
     }
 
-    public addLock(process:dbProcess) :boolean{
+    public addLock(process:dbProcess) :boolean{/*
         if(process.command === `createDB`){
             //NOT TODO
         }else if(process.command === `renameDB`){
@@ -798,11 +809,11 @@ export class coreDB {
         }else{
             return false;
         }
-
+*/
         return true;
     }
 
-    public clearLock(process:dbProcess) :boolean{
+    public clearLock(process:dbProcess) :boolean{/*
         if(process.command === `createDB`){
             //NOT TODO
         }else if(process.command === `renameDB`){
@@ -832,7 +843,7 @@ export class coreDB {
         }else if(process.command === `searchTableData`){
             fs.unlinkSync(path.join(config.path.savePath,process.data.dbName,process.data.tableName,`.lock`));
         }
-
+*/
         return true;
     }
     
