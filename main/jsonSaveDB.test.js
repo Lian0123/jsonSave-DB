@@ -262,10 +262,11 @@ test(`搜尋一筆資料(成功)`, () => {
     testDB.createDB(`testDatabase13`);
     testDB.createTable(`testDatabase13`,`table1`);
     testDB.multInsertTableData(`testDatabase13`,`table1`,tmpRow);
-    testDB.searchTableData(`testDatabase13`,`table1`,`aa1`).then(function(params) {
-        expect(params.length === 0).toBe(true);
-    });
-    
+    testDB.insertTableData(`testDatabase13`,`table1`,`aa1`);
+    let getSearch = testDB.searchTableData(`testDatabase13`,`table1`,`aa1`);
+    console.log(getSearch);
+    expect(getSearch.length > 0).toBe(true);
+
     expect(fs.existsSync(path.join(config.path.savePath,`testDatabase13`,`table1`,`data_0.json`))).toBe(true);
 
     let getInfoRowData = JSON.parse(fs.readFileSync(path.join(config.path.savePath,`testDatabase13`,`table1`,`data_0.json`))).data;

@@ -38,8 +38,9 @@ export type dbInfoOption          = {
 };
 
 type retrunSearchType = {
-    frameId :number,
-    info    :Array<{rowId:number,data:any}>,
+    frameId : number,
+    rowId   : number,
+    data    : any,
 };
 
 export type userListType          = {
@@ -500,11 +501,23 @@ export class coreDB {
         }
     }
 
-    public async updateTableData(dbName:string, tableName:string, oldData:any, newData:any, option?:updateTableDataOption) :Promise<void>{
+    public updateTableData(dbName:string, tableName:string, oldData:any, newData:any, option?:updateTableDataOption) :void{
+        let matchList  :Array<retrunSearchType> = this.searchTableData(dbName,tableName,oldData);
+        let rowData    :Array<any>              = [];
+
+        for (let i = 0; i < matchList.length; i++) {
+            rowData = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath, dbName,tableName, `data_`+matchList[i].frameId+`.json`)))).data;
+            rowData[matchList[i].rowId] = newData;
+            fs.writeFileSync(path.join(config.path.savePath,dbName,tableName,`data_`+matchList[i].frameId+`.json`), JSON.stringify({data:rowData}, null, 4));
+        }
+
+    }
+    /*
+    public async multUpdateTableData(dbName:string, tableName:string, oldData:any, newData:any, option?:updateTableDataOption) :Promise<void>{
         
-        let MatchList :Array<retrunSearchType> = await this.searchTableData(dbName,tableName,oldData);
+        let matchList :Array<retrunSearchType> = await this.searchTableData(dbName,tableName,oldData);
         
-        for (let i = 0; i < MatchList.length; i++) {
+        for (let i = 0; i < matchList.length; i++) {
             let worker :Worker = new Worker(path.join(__dirname,`workers`,`updateWorker.js`));
 
             await worker.on('message', function(message){});
@@ -514,10 +527,23 @@ export class coreDB {
 
 
     }
-    
-    public async deleteTableData(dbName:string, tableName:string, data:any, option?:deleteTableDataOption) :Promise<void>{
-        let MatchList = await this.searchTableData(dbName,tableName,data);
-        for (let i = 0; i < MatchList.length; i++) {
+    */
+
+   public deleteTableData(dbName:string, tableName:string, data:any, option?:deleteTableDataOption) :void{
+        let matchList  :Array<retrunSearchType> = this.searchTableData(dbName,tableName,data);
+        let rowData    :Array<any>              = [];
+
+        for (let i = 0; i < matchList.length; i++) {
+            rowData = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath, dbName,tableName, `data_`+matchList[i].frameId+`.json`)))).data;
+            rowData.splice(matchList[i].rowId,1);
+            fs.writeFileSync(path.join(config.path.savePath,dbName,tableName,`data_`+matchList[i].frameId+`.json`), JSON.stringify({data:rowData}, null, 4));
+        }
+
+    }
+    /*
+    public async multDeleteTableData(dbName:string, tableName:string, data:any, option?:deleteTableDataOption) :Promise<void>{
+        let matchList = await this.searchTableData(dbName,tableName,data);
+        for (let i = 0; i < matchList.length; i++) {
             let worker :Worker = new Worker(path.join(__dirname,`workers`,`updateWorker.js`));
 
             await worker.on('message', function(message){});
@@ -525,10 +551,76 @@ export class coreDB {
             worker.postMessage({dbName:dbName, tableName:tableName, newData:{}, frameId:i, option:option.type});
         }
         this.resizeTable(path.join(config.path.savePath,dbName,tableName));
+    }*/
+
+    public searchTableData(dbName:string, tableName:string, data:any, option?:searchTableDataOption) :Array<retrunSearchType>{
+        let matchList    :Array<retrunSearchType> = [];
+        let tableFrame   :Array<string>           = this.getTableFrame(path.join(config.path.savePath,dbName,tableName));
+        let searchOption :string                  = `fullData`;
+        let searchTest   :boolean                 = false;
+        let searchNeed   :any                     = Object.getOwnPropertyNames(data);
+
+        if(typeof(option) === `object` && option !== undefined){
+            if(typeof(option.type) === `string`){
+                searchOption = option.type;
+            }
+        }
+        
+        if(searchOption === `fullData`){
+            for (let i = 0; i < tableFrame.length; i++) {
+                let rowData :Array<any> = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath, dbName,tableName, `data_`+i+`.json`)))).data;
+                
+                for (let j = 0; j < rowData.length; j++) {
+                    if(rowData[j] === data){
+                        matchList.push({frameId:i,rowId:j,data:rowData[j]});
+                    }
+                    
+                }
+            }
+        }else if(searchOption === `fullMember`){
+            for (let i = 0; i < tableFrame.length; i++) {
+                let rowData :Array<any> = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath, dbName,tableName, `data_`+i+`.json`)))).data;
+                
+                for (let j = 0; j < rowData.length; j++) {
+                    searchTest = true;
+                    for (let k = 0; k < searchNeed.length; k++) {
+                        if(rowData[j][searchNeed[k]] !== searchNeed[searchNeed[k]] || rowData[j][searchNeed[k]] === undefined){
+                            searchTest = false;
+                        }
+                    }
+                    
+                    if(searchTest){
+                        matchList.push({frameId:i,rowId:j,data:rowData[j]});
+                    }
+                }
+            }
+        }else if(searchOption === `onlyMember`){
+
+            for (let i = 0; i < tableFrame.length; i++) {
+                let rowData :Array<any> = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath, dbName,tableName, `data_`+i+`.json`)))).data;
+                    
+                for (let j = 0; j < rowData.length; j++) {
+                    searchTest = false;
+                    for (let k = 0; k < searchNeed.length; k++) {
+                        if(rowData[j][searchNeed[k]] === searchNeed[searchNeed[k]] && rowData[j][searchNeed[k]] !== undefined){
+                            searchTest =true;
+                        }
+                    }
+                    
+                    if(searchTest){
+                        matchList.push({frameId:i,rowId:j,data:rowData[j]});
+                    }
+                }
+            }
+        }else{
+            throw new Error(`Unknow Option Type \"`+option+`\" In option.type`);
+        }
+
+        return matchList;
     }
-    
-    public async searchTableData(dbName:string, tableName:string, data:any, option?:searchTableDataOption) :Promise<Array<retrunSearchType>>{
-        let MatchList    :Array<retrunSearchType> = [];
+    /*
+    public async multSearchTableData(dbName:string, tableName:string, data:any, option?:searchTableDataOption) :Promise<Array<retrunSearchType>>{
+        let matchList    :Array<retrunSearchType> = [];
         let tableFrame   :Array<string>           = this.getTableFrame(path.join(config.path.savePath,dbName,tableName));
         let searchOption :string                  = `fullData`;
 
@@ -540,17 +632,17 @@ export class coreDB {
             let worker :Worker = new Worker(path.join(__dirname,`workers`,`searchWorker.js`), { workerData: {dbName:dbName, tableName:tableName, data:data, frameId:i, option:searchOption} });
 
             await worker.on('message', function(message){
-                MatchList = MatchList.concat(message);
-                //console.log(MatchList);
+                matchList = matchList.concat(message);
+                //console.log(matchList);
             });
             
         }
 
-        //console.log(MatchList);
+        //console.log(matchList);
         
-        return MatchList;
+        return matchList;
     }
-
+    */
     /*
     public joinTableData(dbTableArray:Array<Object> , option?:joinTableOption){
 

@@ -31,11 +31,9 @@ if(workerData.option.type === `fullData`){
 }else if(workerData.option.type === `fullMember`){
     searchNeed = Object.getOwnPropertyNames(workerData.search);
     for (let i = 0; i < rowData.length; i++) {
-        searchTest = false;
+        searchTest = true;
         for (let j = 0; j < searchNeed.length; j++) {
-            if(rowData[i][searchNeed[j]] === workerData.search[searchNeed[j]] && rowData[i][searchNeed[j]] !== undefined){
-                searchTest = true;
-            }else{
+            if(rowData[i][searchNeed[j]] !== workerData.search[searchNeed[j]] || rowData[i][searchNeed[j]] === undefined){
                 searchTest = false;
             }
         }
