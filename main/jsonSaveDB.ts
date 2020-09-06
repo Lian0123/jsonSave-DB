@@ -1,18 +1,80 @@
-import * as fs    from "fs";
-import * as path  from "path";
-import * as fDate from "./formateDate";
-import * as config from "./config.js";
+import * as fs       from "fs";
+import * as path     from "path";
+import * as fDate    from "./formateDate";
+import * as config    from "./config.js";
 import { Worker } from "worker_threads";
 
-export type dbLink                = fs.PathLike;
-    
-export type dbCreateOption        = fs.Mode;
+function isUndefined(value :any) :boolean{
+    return value === undefined;
+}
 
-export type dbRemoveOption        = fs.RmDirOptions;
+function isDefined(value :any) :boolean{
+    return value !== undefined;
+}
 
-export type tableCreateOption     = object;
+export type dbCreateOption        = {
+    dbConfig?  : dbJsonType ,
+    execLimt? : number,
+    fsOption? : {
+        mkdirSyncOption?     : fs.Mode | (fs.MakeDirectoryOptions & { recursive?: false; }) | null
+        writeFileSyncOption? : fs.WriteFileOptions
+    }
+};
 
-export type tableRemoveOption     = object;
+export type dbRenameOption        = {
+    execLimt? : number,
+    fsOption? : {
+        writeFileSyncOption? : fs.WriteFileOptions
+    }
+}
+
+export type dbRemoveOption        = {
+    execLimt?      : number,
+    cleanFileLock? : boolean, 
+    fsOption?      : {
+        rmdirSyncOption?  : fs.RmDirOptions
+    }
+}
+
+export type dbInfoOption          = {
+    execLimt?           : number,
+    isShowDatabaseName? : boolean,
+    isShowAbout?        : boolean, 
+    isShowDate?         : boolean,
+    isShowTime?         : boolean,
+    isShowHash?         : boolean,
+    isShowAuth?         : boolean,
+    isShowUserList?     : boolean,
+    isShowTableList?    : boolean,
+    isShowLimit?        : boolean,
+};
+
+export type setDBInfoOption          = {
+    execLimt?      : number,
+};
+
+export type tableCreateOption     = {
+    tableConfig?  : TableJsonType,
+    execLimt? : number,
+    fsOption? : {
+        mkdirSyncOption?     : fs.Mode | (fs.MakeDirectoryOptions & { recursive?: false; }) | null
+        writeFileSyncOption? : fs.WriteFileOptions
+    }
+};
+
+export type tableRenameOption       = {
+    execLimt?      : number,
+};
+
+export type tableRemoveOption     = {
+    execLimt?      : number,
+    cleanFileLock? : boolean, 
+    fsOption?      : {
+        rmdirSyncOption?     : fs.RmDirOptions
+        writeFileSyncOption? : fs.WriteFileOptions
+    }
+};
+
 
 export type tableInfoOption       = object;
 
@@ -30,11 +92,6 @@ export type deleteTableDataOption = {
 
 export type searchTableDataOption = {
     type :string, 
-};
-
-export type dbInfoOption          = {
-    onlyInfo?: object,
-    onlyUser?: object,
 };
 
 type retrunSearchType = {
@@ -122,7 +179,7 @@ export class coreDB {
             last: [],
         };
 
-        for (let i = 0; i < this.idPool.length; i++) {
+        for (let i = 0; i < config.procLimit; i++) {
             this.idPool.push(i);
         }
 
@@ -131,7 +188,7 @@ export class coreDB {
     }
 
     public createDB(dbName:string, option?:dbCreateOption) :void {
-        let dbJson :dbJsonType = {
+        let dbJson     :dbJsonType = {
             database      : dbName,
             about         : ``,
             date          : this.date.getDate(),
@@ -145,6 +202,13 @@ export class coreDB {
                 databaseAboutLength : 1024,
             }
         };
+        let execOption :dbCreateOption = {
+            execLimt : 1,
+            fsOption : {
+                mkdirSyncOption     : null,
+                writeFileSyncOption : null,
+            }
+        };
 
         /* ----------------- Start Test Is Formate Database ----------------- */
         if(fs.existsSync(path.join(config.path.savePath,dbName))){
@@ -154,18 +218,42 @@ export class coreDB {
 
 
         /* ----------------- Start Read Option----------------- */
+        if(isDefined(option)){
+            if(isDefined(option.dbConfig)){
 
+            }
+
+            if(isDefined(option.execLimt)){
+                execOption.execLimt = option.execLimt;
+            }
+
+            if(isDefined(option.fsOption)){
+                if(isDefined(option.fsOption.mkdirSyncOption)){
+                    execOption.fsOption.mkdirSyncOption = option.fsOption.mkdirSyncOption;
+                }
+
+                if(isDefined(option.fsOption.writeFileSyncOption)){
+                    execOption.fsOption.writeFileSyncOption = option.fsOption.writeFileSyncOption;
+                }
+            }
+        }
         /* ----------------- End   Read Option----------------- */
 
 
         /* ----------------- Start Create Database ----------------- */
-        fs.mkdirSync(path.join(config.path.savePath,dbName));
-        fs.writeFileSync(path.join(config.path.savePath,dbName,`db.json`),JSON.stringify(dbJson, null, 4));
+        fs.mkdirSync(path.join(config.path.savePath,dbName),execOption.fsOption.mkdirSyncOption);
+        fs.writeFileSync(path.join(config.path.savePath,dbName,`db.json`),JSON.stringify(dbJson, null, 4),execOption.fsOption.writeFileSyncOption);
         /* ----------------- Start Create Database ----------------- */
     }
 
-    public renameDB(dbOldName:string, dbNewName:string) :void{
-        let dbJson :dbJsonType = {};
+    public renameDB(dbOldName:string, dbNewName:string, option?:dbRenameOption) :void{
+        let dbJson     :dbJsonType     = {};
+        let execOption :dbRenameOption = {
+            execLimt : 1,
+            fsOption : {
+                writeFileSyncOption: null
+            }
+        };
 
         /* ----------------- Start Test Is Formate Database ----------------- */
         if(!fs.existsSync(path.join(config.path.savePath,dbOldName))){
@@ -182,18 +270,40 @@ export class coreDB {
         }
         /* ----------------- End   Test Is Formate Database ----------------- */
 
+
+        /* ----------------- Start Read Option----------------- */
+        if(isDefined(option)){
+
+            if(isDefined(option.execLimt)){
+                execOption.execLimt = option.execLimt;
+            }
+
+            if(isDefined(option.fsOption)){
+                if(isDefined(option.fsOption.writeFileSyncOption)){
+                    execOption.fsOption.writeFileSyncOption = option.fsOption.writeFileSyncOption;
+                }
+            }
+        }
+        /* ----------------- End   Read Option----------------- */
+
         
         /* ----------------- Start Update Database ----------------- */
         fs.renameSync(path.join(config.path.savePath,dbOldName), path.join(config.path.savePath,dbNewName));
         dbJson.database = dbNewName;        
-        fs.writeFileSync(path.join(config.path.savePath,dbNewName,`db.json`), JSON.stringify(dbJson, null, 4));
+        fs.writeFileSync(path.join(config.path.savePath,dbNewName,`db.json`), JSON.stringify(dbJson, null, 4), execOption.fsOption.writeFileSyncOption);
         /* ----------------- End   Update Database ----------------- */
 
     }
 
-    public removeDB(dbName:string, options?:dbRemoveOption){
+    public removeDB(dbName:string, option?:dbRemoveOption) :void{
         let dbJson   :dbJsonType      = {};
-        let fsOption :fs.RmDirOptions = {};
+        let execOption :dbRemoveOption = {
+            execLimt      : 1,
+            cleanFileLock : true,
+            fsOption      : {
+                rmdirSyncOption: {recursive:false}
+            }
+        };
 
         /* ----------------- Start Test Is Formate Database ----------------- */
         if(!fs.existsSync(path.join(config.path.savePath,dbName))){
@@ -208,25 +318,47 @@ export class coreDB {
 
 
         /* ----------------- Start Read Option ----------------- */
+        if(isDefined(option)){
+            if (isDefined(option.execLimt)) {
+                execOption.execLimt = option.execLimt;
+            }
+
+            if(isDefined(option.fsOption)){
+                if(isDefined(option.fsOption.rmdirSyncOption)){
+                    execOption.fsOption.rmdirSyncOption = option.fsOption.rmdirSyncOption;
+                }
+            }
+        }
         /* ----------------- End   Read Option ----------------- */
 
 
         /* ----------------- Start Remove Database ----------------- */
-        if(options === {} || options === undefined ){
-            fs.unlinkSync(path.join(config.path.savePath,dbName,"db.json"));
-            fs.rmdirSync(path.join(config.path.savePath,dbName));
+        if(execOption.fsOption.rmdirSyncOption.recursive === true){
+            if(execOption.cleanFileLock){
+                throw new Error(`The cleanFileLock flag is \"Lock\", it can't be recursive delete, please let the cleanFileLock be \"false\".`)
+            }else{
+                fs.rmdirSync(path.join(config.path.savePath,dbName),execOption.fsOption.rmdirSyncOption);
+            }
         }else{
-            fs.rmdirSync(path.join(config.path.savePath,dbName),options);
+            if(dbJson.tableList.length > 0 && fs.readdirSync(path.join(config.path.savePath,dbName)).length > 1){
+                throw new Error(`The database have table, please after remove the all table, use the \"dbRemove\". Btw if you need remove all file please use the \"fsOption\" and close \"cleanFileLock\".`)
+            }else{
+                fs.unlinkSync(path.join(config.path.savePath,dbName,"db.json"));
+                fs.rmdirSync(path.join(config.path.savePath,dbName));
+            }
         }
         /* ----------------- End   Remove Database ----------------- */
     }
 
-    public getDBInfo(dbName:string, options?:dbInfoOption) :dbJsonType{
-        let dbJson :dbJsonType = {};
+    public getDBInfo(dbName:string, option?:dbInfoOption) :dbJsonType{
+        let dbJson     :dbJsonType   = {};
+        let execOption :dbInfoOption = {
+            execLimt: 1
+        };
 
         /* ----------------- Start Test Is Formate Database ----------------- */
-        if(fs.existsSync(path.join(config.path.savePath,dbName))){
-            throw new Error(`The Database Name \"`+dbName+`\" Is Be Used`);
+        if(!fs.existsSync(path.join(config.path.savePath,dbName))){
+            throw new Error(`The Database Name \"`+dbName+`\" Was Not Created`);
         }
 
         dbJson = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,`db.json`))));
@@ -237,15 +369,61 @@ export class coreDB {
 
 
         /* ----------------- Start Read Option ----------------- */
+        if(isDefined(option)){
+
+            if(isDefined(option.execLimt)){
+                execOption.execLimt = option.execLimt;
+            }
+
+            if(!option.isShowDatabaseName && isDefined(option.isShowDatabaseName)){
+                delete(dbJson.database);
+            }
+
+            if(!option.isShowAbout && isDefined(option.isShowAbout)){
+                delete(dbJson.about);
+            }
+
+            if(!option.isShowDate && isDefined(option.isShowDate)){
+                delete(dbJson.date);
+            }
+
+            if(!option.isShowTime && isDefined(option.isShowTime)){
+                delete(dbJson.time);
+            }
+
+            if(!option.isShowHash && isDefined(option.isShowHash)){
+                delete(dbJson.hash);
+            }
+
+            if(!option.isShowAuth && isDefined(option.isShowAuth)){
+                delete(dbJson.auth);
+            }
+
+            if(!option.isShowUserList && isDefined(option.isShowUserList)){
+                delete(dbJson.userList);
+            }
+
+            if(!option.isShowTableList && isDefined(option.isShowTableList)){
+                delete(dbJson.tableList);
+            }
+            
+            if(!option.isShowLimit && isDefined(option.isShowLimit)){
+                delete(dbJson.limit);
+            }
+            
+        }
         /* ----------------- End   Read Option ----------------- */
 
 
         return dbJson;
     }
 
-    public setDBInfo(dbName:string, setConfig?:dbJsonType) :void{
-        let dbJson :dbJsonType = {};
-        
+    public setDBInfo(dbName:string, setConfig:dbJsonType, option?:setDBInfoOption) :void{
+        let dbJson     :dbJsonType = {};
+        let execOption :setDBInfoOption = {
+            execLimt: 1
+        }
+
         /* ----------------- Start Test Is Formate Database ----------------- */
         if(fs.existsSync(path.join(config.path.savePath,dbName))){
             throw new Error(`The Database Name \"`+dbName+`\" Is Be Used`);
@@ -259,13 +437,17 @@ export class coreDB {
 
 
         /* ----------------- Start Read Option ----------------- */
-        if(setConfig !== undefined){
-            if(setConfig.about !== undefined){
+        if(isDefined(setConfig)){
+            if(isDefined(option.execLimt)){
+                execOption.execLimt = option.execLimt;
+            }
+
+            if(isDefined(setConfig.about)){
                 dbJson.about = setConfig.about;
             }
 
-            if(setConfig.limit !== undefined){
-                if(setConfig.limit.databaseNameLength !== undefined){
+            if(isDefined(setConfig.limit)){
+                if(isDefined(setConfig.limit.databaseNameLength)){
                     dbJson.limit.databaseNameLength = setConfig.limit.databaseNameLength;
                 }
             }
@@ -293,6 +475,13 @@ export class coreDB {
                 tableAboutLength    : 1024,
             }
         };
+        let execOption :tableCreateOption = {
+            execLimt: 1,
+            fsOption: {
+                mkdirSyncOption     : null,
+                writeFileSyncOption : null,
+            }
+        }
 
 
         /* ----------------- Start Test Is Formate Database ----------------- */
@@ -318,6 +507,21 @@ export class coreDB {
 
 
         /* ----------------- Start Read Option ----------------- */
+        if(isDefined(option)){
+            if(isDefined(option.tableConfig)){
+
+            }
+
+            if(isDefined(option.execLimt)){
+                execOption.execLimt = option.execLimt;
+            }
+
+            if(isDefined(option.fsOption)){
+                if(isDefined(option.fsOption.writeFileSyncOption)){
+                    execOption.fsOption.writeFileSyncOption = option.fsOption.writeFileSyncOption;
+                }
+            }
+        }
         /* ----------------- End   Read Option ----------------- */
 
 
@@ -329,13 +533,16 @@ export class coreDB {
 
         /* ----------------- Start Update db.json ----------------- */
         dbJson.tableList.push(tableName);
-        fs.writeFileSync(path.join(config.path.savePath,dbName,`db.json`), JSON.stringify(dbJson, null, 4));
+        fs.writeFileSync(path.join(config.path.savePath,dbName,`db.json`), JSON.stringify(dbJson, null, 4), execOption.fsOption.writeFileSyncOption);
         /* ----------------- End   Update db.json ----------------- */
     }
 
-    public renameTable(dbName:string, tableOldName:string, tableNewName:string) :void{
-        let dbJson    :dbJsonType    = {};
-        let tableJson :TableJsonType = {};
+    public renameTable(dbName:string, tableOldName:string, tableNewName:string, option?:tableRenameOption) :void{
+        let dbJson     :dbJsonType      = {};
+        let tableJson  :TableJsonType   = {};
+        let execOption :tableRenameOption = {
+            execLimt: 1
+        };
 
         /* ----------------- Start Test Is Formate Database ----------------- */
         if(!fs.existsSync(path.join(config.path.savePath,dbName))){
@@ -384,10 +591,16 @@ export class coreDB {
     }
 
     public removeTable(dbName:string, tableName:string, option?:tableRemoveOption) :void{
-        let dbJson    :dbJsonType      = {};
-        let tableJson :TableJsonType   = {};
-        let fsOption  :fs.RmDirOptions = {};
-
+        let dbJson     :dbJsonType        = {};
+        let tableJson  :TableJsonType     = {};
+        let execOption :tableRemoveOption = {
+            execLimt      : 1,
+            cleanFileLock : true, 
+            fsOption      : {
+                rmdirSyncOption     : {recursive:false},
+                writeFileSyncOption : null
+            }
+        };
 
         /* ----------------- Start Test Is Formate Database ----------------- */
         if(!fs.existsSync(path.join(config.path.savePath,dbName))){
@@ -416,23 +629,44 @@ export class coreDB {
 
 
         /* ----------------- Start Read Option ----------------- */
+        if(isDefined(option)){
+            if (isDefined(option.execLimt)) {
+                execOption.execLimt = option.execLimt;
+            }
+
+            if(isDefined(option.fsOption)){
+                if(isDefined(option.fsOption.rmdirSyncOption)){
+                    execOption.fsOption.rmdirSyncOption = option.fsOption.rmdirSyncOption;
+                }
+            }
+        }
         /* ----------------- End   Read Option ----------------- */
 
 
         /* ----------------- Start Remove table ----------------- */
-        if(fsOption === {}){
-            fs.unlinkSync(path.join(config.path.savePath,dbName,tableName,`table.json`));
-            fs.rmdirSync(path.join(config.path.savePath,dbName,tableName));
+        if(execOption.fsOption.rmdirSyncOption.recursive === true){
+            if(execOption.cleanFileLock){
+                throw new Error(`The cleanFileLock flag is \"Lock\", it can't be recursive delete, please let the cleanFileLock be \"false\".`)
+            }else{
+                fs.rmdirSync(path.join(config.path.savePath,dbName,tableName),execOption.fsOption.rmdirSyncOption);
+            }
         }else{
-            fs.rmdirSync(path.join(config.path.savePath,dbName),fsOption);
+            if(dbJson.tableList.length > 0 && fs.readdirSync(path.join(config.path.savePath,dbName)).length > 1){
+                throw new Error(`The database table have data, please after remove the all table data, use the \"tableRemove\". Btw if you need remove all file please use the \"fsOption\" and close \"cleanFileLock\".`)
+            }else{
+                fs.unlinkSync(path.join(config.path.savePath,dbName,tableName,"table.json"));
+                fs.rmdirSync(path.join(config.path.savePath,dbName,tableName));
+            }
         }
+
+        dbJson.tableList.splice(dbJson.tableList.indexOf(tableName),1);
+        fs.writeFileSync(path.join(config.path.savePath,dbName,`db.json`), JSON.stringify(dbJson, null, 4), execOption.fsOption.writeFileSyncOption);
         /* ----------------- End   Remove Database ----------------- */
     }
 
-    public getTableInfo(dbName:string, tableName:string, options?:tableInfoOption) :void{
+    public getTableInfo(dbName:string, tableName:string, option?:tableInfoOption) :TableJsonType{
         let dbJson    :dbJsonType      = {};
         let tableJson :TableJsonType   = {};
-        let fsOption  :fs.RmDirOptions = {};
 
         /* ----------------- Start Test Is Formate Database ----------------- */
         if(!fs.existsSync(path.join(config.path.savePath,dbName))){
@@ -443,10 +677,51 @@ export class coreDB {
         if(dbJson.database !== dbName){
             throw new Error(`Not Found Select Database Of \"`+dbName+`\" Of db.json`);
         }
-        /* ----------------- Start Test Is Formate Database ----------------- */
+        /* ----------------- End   Test Is Formate Database ----------------- */
+
+        /* ----------------- Start Test Is Formate Table ----------------- */
+        if(!fs.existsSync(path.join(config.path.savePath,dbName,tableName))){
+            throw new Error(`The Database \"`+dbName+`\" Of Table Name \"`+tableName+`\" Was Not Created`);
+        }
+
+        tableJson = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,tableName,`table.json`))));
+        if(tableJson.table !== tableName){
+            throw new Error(`Not Found Select Database \"`+dbName+`\" Table Of \"`+tableName+`\" in table.json`);
+        }else if(dbJson.tableList.indexOf(tableName) < 0){
+            throw new Error(`Not Found Select Database \"`+dbName+`\" Table Of \"`+tableName+`\" Wasn't Link db.json`);
+        }
+        /* ----------------- End   Test Is Formate Table ----------------- */
+
+        return tableJson;
     }
     
-    public setTableInfo(dbName:string, tableName:string, config?:tableConfig) :void{
+    public setTableInfo(dbName:string, tableName:string, setConfig?:tableConfig) :void{
+        let dbJson    :dbJsonType      = {};
+        let tableJson :TableJsonType   = {};
+
+        /* ----------------- Start Test Is Formate Database ----------------- */
+        if(!fs.existsSync(path.join(config.path.savePath,dbName))){
+            throw new Error(`Not Found Select Database Of \"`+dbName+`\".`);
+        }
+
+        dbJson = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,`db.json`))));
+        if(dbJson.database !== dbName){
+            throw new Error(`Not Found Select Database Of \"`+dbName+`\" Of db.json`);
+        }
+        /* ----------------- End   Test Is Formate Database ----------------- */
+
+        /* ----------------- Start Test Is Formate Table ----------------- */
+        if(!fs.existsSync(path.join(config.path.savePath,dbName,tableName))){
+            throw new Error(`The Database \"`+dbName+`\" Of Table Name \"`+tableName+`\" Was Not Created`);
+        }
+
+        tableJson = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,tableName,`table.json`))));
+        if(tableJson.table !== tableName){
+            throw new Error(`Not Found Select Database \"`+dbName+`\" Table Of \"`+tableName+`\" in table.json`);
+        }else if(dbJson.tableList.indexOf(tableName) < 0){
+            throw new Error(`Not Found Select Database \"`+dbName+`\" Table Of \"`+tableName+`\" Wasn't Link db.json`);
+        }
+        /* ----------------- End   Test Is Formate Table ----------------- */
 
     }
 
@@ -468,7 +743,7 @@ export class coreDB {
         }
     }
 
-    public multInsertTableData(dbName:string, tableName:string, dataArray:Array<any>) :void{
+    public multInsertTableData(dbName:string, tableName:string, dataArray:Array<any>, option?:object) :void{
         let tableFrame :Array<string> = this.getTableFrame(path.join(config.path.savePath,dbName,tableName));
         let FrameCount :number        = JSON.parse(String(fs.readFileSync(path.join(config.path.savePath,dbName,tableName,`table.json`)))).fileSize;
         let rowData    :Array<any>    = [];
@@ -643,6 +918,7 @@ export class coreDB {
         return matchList;
     }
     */
+   
     /*
     public joinTableData(dbTableArray:Array<Object> , option?:joinTableOption){
 
@@ -703,14 +979,18 @@ export class coreDB {
     }
 
     public execPool() :boolean{
-
+        console.log(`---start---`);
+        console.log(this.pool);   
         if(this.pool.first.length > 0){
-            let process :dbProcess = this.pool.first[0];
-            if(!this.testIsLock(process)){
-                this.addLock(process);
-                if(this.execComand(process)){
-                    this.clearLock(process);
-                    this.removePID(process);
+            while(this.pool.first.length > 0){
+                let process :dbProcess = this.pool.first[0];
+                if(!this.testIsLock(process)){
+                    this.addLock(process);
+                    if(this.execComand(process)){
+                        this.clearLock(process);
+                        this.removePID(process);
+                        this.pool.first.splice(this.pool.first.indexOf(process),1);
+                    }
                 }
             }
         }else if(this.pool.base.length > 0){
@@ -719,8 +999,15 @@ export class coreDB {
                 if(this.pool.first.length > 0){
                     break;
                 }
-                let process = this.pool.base[0];
-                this.execComand(process);
+                let process :dbProcess = this.pool.base[0];
+                if(!this.testIsLock(process)){
+                    this.addLock(process);
+                    if(this.execComand(process)){
+                        this.clearLock(process);
+                        this.removePID(process);
+                        this.pool.base.splice(this.pool.base.indexOf(process),1);
+                    }
+                }
             }
 
         }else if(this.pool.first.length === 0 && this.pool.base.length === 0 && this.pool.last.length > 0){
@@ -729,20 +1016,26 @@ export class coreDB {
                 if(this.pool.first.length > 0){
                     break;
                 }
-                let process = this.pool.last[0];
+                let process :dbProcess = this.pool.last[0];
                 if(!this.testIsLock(process)){
-                    this.pool.last.shift();
-                    this.execComand(process);
+                    this.addLock(process);
+                    if(this.execComand(process)){
+                        this.clearLock(process);
+                        this.removePID(process);
+                        this.pool.last.splice(this.pool.last.indexOf(process),1);
+                    }
                 }
             }
         }else{
             return false;
         }
 
+        console.log(`---end---`);
+        console.log(this.pool);   
         return true;
     }
 
-    public execComand(process:dbProcess) :boolean{/*
+    public execComand(process:dbProcess) :boolean{
         if(process.command === `createDB`){
             this.createDB(process.data.dbName,process.data.option);
         }else if(process.command === `renameDB`){
@@ -771,12 +1064,14 @@ export class coreDB {
             this.deleteTableData(process.data.dbName,process.data.tableName,process.data.mainData,process.data.option);
         }else if(process.command === `searchTableData`){
             this.searchTableData(process.data.dbName,process.data.tableName,process.data.data,process.data.config);
+        }else{
+            return false;
         }
-*/
+
         return true;
     }
 
-    public testIsLock(process:dbProcess) :boolean{/*
+    public testIsLock(process:dbProcess) :boolean{
         if(process.command === `createDB`){
             if(fs.existsSync(path.join(config.path.savePath,process.data.dbName,`.lock`))){
                 return true;
@@ -863,13 +1158,13 @@ export class coreDB {
             }else{
                 return false;
             }
-        }*/
+        }
 
         return true;
 
     }
 
-    public addLock(process:dbProcess) :boolean{/*
+    public addLock(process:dbProcess) :boolean{
         if(process.command === `createDB`){
             //NOT TODO
         }else if(process.command === `renameDB`){
@@ -901,11 +1196,11 @@ export class coreDB {
         }else{
             return false;
         }
-*/
+
         return true;
     }
 
-    public clearLock(process:dbProcess) :boolean{/*
+    public clearLock(process:dbProcess) :boolean{
         if(process.command === `createDB`){
             //NOT TODO
         }else if(process.command === `renameDB`){
@@ -934,8 +1229,10 @@ export class coreDB {
             fs.unlinkSync(path.join(config.path.savePath,process.data.dbName,process.data.tableName,`.lock`));
         }else if(process.command === `searchTableData`){
             fs.unlinkSync(path.join(config.path.savePath,process.data.dbName,process.data.tableName,`.lock`));
+        }else{
+            return false;
         }
-*/
+
         return true;
     }
     
@@ -1009,6 +1306,10 @@ export class coreDB {
         }
 
         return false;
+    }
+
+    private getProcess(){
+        
     }
 }
 
