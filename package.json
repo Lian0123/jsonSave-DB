@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "buildAuth"  : "",
-    "_buildAuthAfter"  : "",
+    "buildAuth": "",
+    "_buildAuthAfter": "",
     "buildLevel1": "tsc ./src/level1/*.ts ./src/level1/*/*.ts ./src/level1/*/*/*.ts  --outDir ./build/level1/ && npm run _buildLevel1After",
     "buildLevel2": "npm run buildLevel1 && tsc ./src/level2/*.ts ./src/level2/*/*.ts --outDir ./build/level2/ && npm run _buildLevel2After",
     "buildLevel3": "npm run buildLevel2 && tsc ./src/level3/*.ts ./src/level3/*/*.ts --outDir ./build/level3/ && npm run _buildLevel3After",
@@ -24,9 +24,10 @@
     "url": "git+https://github.com/Lian0123/jsonSave-DB.git"
   },
   "dependencies": {
+    "@types/fs-extra": "^9.0.5",
     "fs-extra": "^9.0.1",
-    "js-sha256": "^0.9.0",
-    "jest": "^26.1.0"
+    "jest": "^26.1.0",
+    "js-sha256": "^0.9.0"
   },
   "keywords": [
     "database"

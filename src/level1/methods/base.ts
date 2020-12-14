@@ -87,7 +87,7 @@ export type userListType = {
  * | Example:
  * |  ||===============================================================
  * |  || import * as base from "./base";
- * |  || let newDatabase :base.dbJsonType = {
+ * |  || let newDatabase :base.databaseJsonType = {
  * |  ||    database   : "testDatabase001",
  * |  ||    about      : "it is a new test database...."
  * |  ||    date       : "2020-01-01",
@@ -110,7 +110,7 @@ export type userListType = {
  * |  ||        databaseAboutLength: 100,
  * |  ||    } 
  */
-export type dbJsonType = {
+export type databaseJsonType = {
     database?      : string,
     about?         : string,
     date?          : string,
@@ -189,7 +189,7 @@ export type dbJsonType = {
  * | Example:
  * |  ||===============================================================
  * |  || import * as base from "./base";
- * |  || let newTable :base.dbJsonType = {
+ * |  || let newTable :base.databaseJsonType = {
  * |  ||    table   : "testTable001",
  * |  ||    about   : "it is a test table",
  * |  ||    forDB   : "testDatabase001",
@@ -234,8 +234,9 @@ export type TableJsonType = {
  * |    * limit     : some of limit setting
  * |      * databaseNameLength  : "database name" text input limit, it will work in edit database time, default is 1024
  * |      * databaseAboutLength : "database about" text input limit, it will work in edit database time, default is 1024
- * |  * execLimit : in "processSystem" when working error, it will redo exec time, execLimit default is 1
- * |  * fsOption  : the database.json is write by fs model, so you can setting fs.mkdirSync and fs.writeFile option
+ * |  * regexpWall : a regex as wall, any create name will follow regex can be run, default is new RegExp(/^\s*$/)
+ * |  * execLimit  : in "processSystem" when working error, it will redo exec time(level 2+), execLimit default is 1
+ * |  * fsOption   : the database.json is write by fs model, so you can setting fs.mkdirSync and fs.writeFile option
  * |    * mkdirSyncOption     : follow fs.mkdirSync option
  * |    * writeFileSyncOption : follow fs.writeFileSync option
  * |
@@ -285,6 +286,7 @@ export type databaseCreateOption = {
             databaseAboutLength? : number,
         }
     } ,
+    regexpWall? : RegExp,
     execLimit? : number,
     fsOption? : {
         mkdirSyncOption?     : fs.Mode | (fs.MakeDirectoryOptions & { recursive?: false; }) | null
@@ -300,8 +302,8 @@ export type databaseCreateOption = {
  * |  ||   //TODO: database rename event
  * |  || }
  * |
- * |  * regexpWall : a regex as wall, any rename name will follow regex can be run, default is new RegExp("*")
- * |  * execLimit  : in "processSystem" when working error, it will redo exec time, execLimit default is 1
+ * |  * regexpWall : a regex as wall, any rename name will follow regex can be run, default is new RegExp(/^\s*$/)
+ * |  * execLimit  : in "processSystem" when working error, it will redo exec time(level 2+), execLimit default is 1
  * |  * fsOption   : the database.json is write by fs model, so you can setting fs.writeFile option
  * |    * writeFileSyncOption : follow fs.writeFileSync option
  * |  
@@ -331,10 +333,10 @@ export type databaseRenameOption = {
  * |  ||   //TODO: database remove event
  * |  || }
  * |
- * |  * execLimit     : in "processSystem" when working error, it will redo exec time, execLimit default is 1
+ * |  * execLimit     : in "processSystem" when working error, it will redo exec time(level 2+), execLimit default is 1
  * |  * cleanFileLock : it is a protect flag, when database has anyone table, it can't be remove, however cleanFileLock === ture, it will do
  * |  * fsOption      : the database.json is write by fs model, so you can setting fs.writeFile option
- * |    * rmdirSyncOption : follow fs.RmDirOptions option
+ * |    * rmSyncOption : follow fs.RmOptions option
  * |  
  * | Example:
  * |  ||===============================================================
@@ -352,7 +354,7 @@ export type databaseRemoveOption = {
     execLimit?     : number,
     cleanFileLock? : boolean, 
     fsOption?      : {
-        rmdirSyncOption?  : fs.RmDirOptions
+        rmSyncOption? : fs.RmOptions
     }
 }
 
@@ -365,7 +367,7 @@ export type databaseRemoveOption = {
  * |  || }
  * |
  * |  * dataWall   : a string array as wall, just like we get info from database.json and not show some data
- * |  * execLimit  : in "processSystem" when working error, it will redo exec time, execLimit default is 1
+ * |  * execLimit  : in "processSystem" when working error, it will redo exec time(level 2+), execLimit default is 1
  * |  
  * | Example:
  * |  ||===============================================================
@@ -399,12 +401,12 @@ export type databasGetOption = {
  * |-------------------------------------------------------------------
  * | About:
  * |  define databasSet.ts function option, the databasSet function like:
- * |  || function databasSet(database :string, config: databasSetConfig, option? :databasSetOption){
+ * |  || function databasSet(database :string, databaseConfig: databasSetConfig, option? :databasSetOption){
  * |  ||   //TODO: database set data event
  * |  || }
  * |  it just follow databaseCreate.option, but this setting will be replace, so please don't replcae ohter member, just like asign "" or 0
  * |
- * |  * execLimit  : in "processSystem" when working error, it will redo exec time, execLimit default is 1
+ * |  * execLimit  : in "processSystem" when working error, it will redo exec time(level 2+), execLimit default is 1
  * | 
  * | Example:
  * |  ||===============================================================
@@ -432,11 +434,11 @@ export type databasSetConfig = {
  * |-------------------------------------------------------------------
  * | About:
  * |  define databasSet.ts function option, the databasSet function like:
- * |  || function databasSet(database :string, config: databasSetConfig, option? :databasSetOption){
+ * |  || function databasSet(database :string, databaseConfig: databasSetConfig, option? :databasSetOption){
  * |  ||   //TODO: database set data event
  * |  || }
  * | 
- * |  * execLimit  : in "processSystem" when working error, it will redo exec time, execLimit default is 1
+ * |  * execLimit  : in "processSystem" when working error, it will redo exec time(level 2+), execLimit default is 1
  * |  
  * | Example:
  * |  ||===============================================================
@@ -463,7 +465,7 @@ export type databasSetOption = {
  * |  ||   //TODO: database copy event
  * |  || }
  * |
- * |  * execLimit : in "processSystem" when working error, it will redo exec time, execLimit default is 1
+ * |  * execLimit : in "processSystem" when working error, it will redo exec time(level 2+), execLimit default is 1
  * |  * fsOption  : the database.json is write by fs model, so you can setting fs.mkdirSync and fs.writeFile option
  * |    * mkdirSyncOption     : follow fs.mkdirSync option
  * |    * writeFileSyncOption : follow fs.writeFileSync option
@@ -482,6 +484,14 @@ export type databaseCopyOption = {
         mkdirSyncOption?     : fs.MakeDirectoryOptions,
         writeFileSyncOption? : fs.WriteFileOptions
     }
+};
+
+export type databaseUserCreateOption = {
+    execLimit? : number
+};
+
+export type databaseUserRemoveOption = {
+    execLimit? : number
 };
 
 export type tableCreateOption = {
