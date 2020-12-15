@@ -1,10 +1,10 @@
 import { config } from "../../global/config";
-import { databaseJsonType, databasSetConfig, databasSetOption } from "./base";
+import { databaseJsonType, databaseSetConfig, databaseSetOption } from "./base";
 import * as path from "path";
 import * as fs from "fs";
 
 
-export function databasSet(databaseName :string, databaseConfig: databasSetConfig, option? :databasSetOption){
+export function databaseSet(databaseName :string, databaseConfig: databaseSetConfig, option? :databaseSetOption){
     let databaseJson   :databaseJsonType = {};
 
         /* ----------------- Start Test Is Formate Database ----------------- */

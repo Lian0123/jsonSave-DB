@@ -48,7 +48,6 @@ export function databaseCreate(databaseName:string, option?:databaseCreateOption
         }
         
     }
-
     /* ----------------- End   Read Option----------------- */
 
 

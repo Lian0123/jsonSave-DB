@@ -1,9 +1,9 @@
 import { config } from "../../global/config";
-import { databaseJsonType, databasGetOption } from "./base";
+import { databaseJsonType, databaseGetOption } from "./base";
 import * as path from "path";
 import * as fs from "fs";
 
-export function databasGet(databaseName:string, option?:databasGetOption) :databaseJsonType{
+export function databaseGet(databaseName:string, option?:databaseGetOption) :databaseJsonType{
     let databaseJson :databaseJsonType   = {};
  
 

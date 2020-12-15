@@ -1,6 +1,5 @@
 import * as fs       from "fs";
 import * as path     from "path";
-
 /*
  * |-------------------------------------------------------------------
  * | About:
@@ -8,14 +7,14 @@ import * as path     from "path";
  * |
  * | Example:
  * |  ||===============================================================
- * |  || import * as base from "./base";
+ * |  || import { isUndefined } base from "./base";
  * |  || let a1 = { a:"1234" };
  * |  || 
  * |  || //return true
- * |  || base.isUndefined(a1?.a);
+ * |  || isUndefined(a1?.a);
  * |  || 
  * |  || //return false
- * |  || base.isUndefined(a1?.b);
+ * |  || isUndefined(a1?.b);
  * |  || 
  */
 export function isUndefined(value :any) :boolean{
@@ -29,14 +28,14 @@ export function isUndefined(value :any) :boolean{
  * |
  * | Example:
  * |  ||===============================================================
- * |  || import * as base from "./base";
+ * |  || import { isDefined } base from "./base";
  * |  || let a1 = { a:"1234" };
  * |  || 
  * |  || //return false
- * |  || base.isUndefined(a1?.a);
+ * |  || isDefined(a1?.a);
  * |  || 
  * |  || //return true
- * |  || base.isUndefined(a1?.b);
+ * |  || isDefined(a1?.b);
  * |  || 
  */
 export function isDefined(value :any) :boolean{
@@ -54,8 +53,8 @@ export function isDefined(value :any) :boolean{
  * |  
  * | Example:
  * |  ||===============================================================
- * |  || import * as base from "./base";
- * |  || let newUser :base.userListType = {
+ * |  || import { userListType } base from "./base";
+ * |  || let newUser :userListType = {
  * |  ||    user   : "ィア_N0123",
  * |  ||    atuh   : "62bbbae23b04bb2d606f80dcc0652b8a931ba5ab1e4f77446edd62d239934582",
  * |  ||    timeUp : "2038-01-19",
@@ -86,8 +85,8 @@ export type userListType = {
  * |
  * | Example:
  * |  ||===============================================================
- * |  || import * as base from "./base";
- * |  || let newDatabase :base.databaseJsonType = {
+ * |  || import { databaseJsonType } base from "./base";
+ * |  || let newDatabase :databaseJsonType = {
  * |  ||    database   : "testDatabase001",
  * |  ||    about      : "it is a new test database...."
  * |  ||    date       : "2020-01-01",
@@ -188,8 +187,8 @@ export type databaseJsonType = {
  * |
  * | Example:
  * |  ||===============================================================
- * |  || import * as base from "./base";
- * |  || let newTable :base.databaseJsonType = {
+ * |  || import { databaseJsonType } base from "./base";
+ * |  || let newTable :databaseJsonType = {
  * |  ||    table   : "testTable001",
  * |  ||    about   : "it is a test table",
  * |  ||    forDB   : "testDatabase001",
@@ -235,7 +234,6 @@ export type TableJsonType = {
  * |      * databaseNameLength  : "database name" text input limit, it will work in edit database time, default is 1024
  * |      * databaseAboutLength : "database about" text input limit, it will work in edit database time, default is 1024
  * |  * regexpWall : a regex as wall, any create name will follow regex can be run, default is new RegExp(/^\s*$/)
- * |  * execLimit  : in "processSystem" when working error, it will redo exec time(level 2+), execLimit default is 1
  * |  * fsOption   : the database.json is write by fs model, so you can setting fs.mkdirSync and fs.writeFile option
  * |    * mkdirSyncOption     : follow fs.mkdirSync option
  * |    * writeFileSyncOption : follow fs.writeFileSync option
@@ -244,7 +242,7 @@ export type TableJsonType = {
  * |
  * | Example:
  * |  ||===============================================================
- * |  || import * as databaseCreate from "./databaseCreate";
+ * |  || import { databaseCreate } from "./databaseCreate";
  * |  || 
  * |  || databaseCreate("testDatabase001",{
  * |  ||    dbConfig  : {
@@ -272,7 +270,6 @@ export type TableJsonType = {
  * |  ||            databaseAboutLength : 100
  * |  ||        }
  * |  ||    },
- * |  ||    execLimit : 3,
  * |  || });
  */
 export type databaseCreateOption = {
@@ -287,9 +284,8 @@ export type databaseCreateOption = {
         }
     } ,
     regexpWall? : RegExp,
-    execLimit? : number,
     fsOption? : {
-        mkdirSyncOption?     : fs.Mode | (fs.MakeDirectoryOptions & { recursive?: false; }) | null
+        mkdirSyncOption?     : fs.MakeDirectoryOptions
         writeFileSyncOption? : fs.WriteFileOptions
     }
 };
@@ -303,23 +299,20 @@ export type databaseCreateOption = {
  * |  || }
  * |
  * |  * regexpWall : a regex as wall, any rename name will follow regex can be run, default is new RegExp(/^\s*$/)
- * |  * execLimit  : in "processSystem" when working error, it will redo exec time(level 2+), execLimit default is 1
  * |  * fsOption   : the database.json is write by fs model, so you can setting fs.writeFile option
  * |    * writeFileSyncOption : follow fs.writeFileSync option
  * |  
  * | Example:
  * |  ||===============================================================
- * |  || import * as databaseRename from "./databaseRename";
+ * |  || import { databaseRename } from "./databaseRename";
  * |  || 
  * |  || databaseCreate("testDatabase001",{
  * |  ||    //we let user can't rename be "admin" "user" "config",we can set the wall, we will be used in level3
  * |  ||    regexWall : new RegExp(/^(admin|user|config)$/),
- * |  ||    execLimit : 7
  * |  || });
  */
 export type databaseRenameOption = {
     regexWall?  : RegExp,
-    execLimit?  : number,
     fsOption?   : {
         writeFileSyncOption? : fs.WriteFileOptions
     }
@@ -329,29 +322,27 @@ export type databaseRenameOption = {
  * |-------------------------------------------------------------------
  * | About:
  * |  define databaseRemove.ts function option, the databaseRemove function like:
- * |  || function databaseRemove(database :string, option? :databaseRenameOption){
+ * |  || function databaseRemove(database :string, option? :databaseRemoveOption){
  * |  ||   //TODO: database remove event
  * |  || }
  * |
- * |  * execLimit     : in "processSystem" when working error, it will redo exec time(level 2+), execLimit default is 1
+ * |  * dataWall      : a string array as wall, just like we get info from database.json and not show some data
  * |  * cleanFileLock : it is a protect flag, when database has anyone table, it can't be remove, however cleanFileLock === ture, it will do
  * |  * fsOption      : the database.json is write by fs model, so you can setting fs.writeFile option
  * |    * rmSyncOption : follow fs.RmOptions option
  * |  
  * | Example:
  * |  ||===============================================================
- * |  || import * as databaseRemove from "./databaseRemove";
+ * |  || import { databaseRemove } from "./databaseRemove";
  * |  || 
  * |  || databaseRemove("testDatabase001",{
  * |  ||    //we let user can't reomve be "admin" "config",we can set the wall, we will be used in level3
  * |  ||    regexWall     : new RegExp(/^(admin|config)$/),
- * |  ||    execLimit     : 0,
  * |  ||    cleanFileLock : true,
  * |  || });
  */
 export type databaseRemoveOption = {
     regexWall?     : RegExp,
-    execLimit?     : number,
     cleanFileLock? : boolean, 
     fsOption?      : {
         rmSyncOption? : fs.RmOptions
@@ -361,22 +352,20 @@ export type databaseRemoveOption = {
 /*
  * |-------------------------------------------------------------------
  * | About:
- * |  define databasGet.ts function option, the databasGet function like:
- * |  || function databasGet(database :string, option? :databasGetOption){
+ * |  define databaseGet.ts function option, the databaseGet function like:
+ * |  || function databaseGet(database :string, option? :databaseGetOption){
  * |  ||   //TODO: database get data event
  * |  || }
  * |
  * |  * dataWall   : a string array as wall, just like we get info from database.json and not show some data
- * |  * execLimit  : in "processSystem" when working error, it will redo exec time(level 2+), execLimit default is 1
  * |  
  * | Example:
  * |  ||===============================================================
- * |  || import * as databaseGet from "./databaseGet";
+ * |  || import { databaseGet } from "./databaseGet";
  * |  || 
  * |  || databaseGet("testDatabase001",{
  * |  ||    //we let user can't get database.json of "about" "userList" "limit", we can set the wall, we will be used in level3
  * |  ||    regexWall : new RegExp(/^(about|userList|limit)$/),
- * |  ||    execLimit : 7
  * |  || });
  * |  ||
  * |  || // user will be get 
@@ -392,28 +381,39 @@ export type databaseRemoveOption = {
  * |  || //   ]
  * |  || // }
  */
-export type databasGetOption = {
+export type databaseGetOption = {
     dataWall?  : Array<String>,
-    execLimit? : number
 };
 
 /*
  * |-------------------------------------------------------------------
  * | About:
- * |  define databasSet.ts function option, the databasSet function like:
- * |  || function databasSet(database :string, databaseConfig: databasSetConfig, option? :databasSetOption){
+ * |  define databaseSet.ts function option, the databaseSet function like:
+ * |  || function databaseSet(database :string, databaseConfig: databaseSetConfig, option? :databaseSetOption){
  * |  ||   //TODO: database set data event
  * |  || }
  * |  it just follow databaseCreate.option, but this setting will be replace, so please don't replcae ohter member, just like asign "" or 0
- * |
- * |  * execLimit  : in "processSystem" when working error, it will redo exec time(level 2+), execLimit default is 1
  * | 
+ * |  * about : change database.json about text input, default is not be change
+ * |  * auth  : change database.json about text input, default is not be change
+ * |  * limit : database.json some mumber limit
+ * |    * databaseNameLength  : change database.json name text can input max size, default is not be change 
+ * |    * databaseAboutLength : change database.json about text can input max size, but it will change after this procese, default is not be change
+ * | 
+ * |  * before time:
+ * |    * about is "AAAAAAAAAA" and databaseAboutLength is 15
+ * |
+ * |  * when we change the about text and change databaseAboutLength:
+ * |    databaseSet("testDatabase001",{about:"12345678901234567890",limit:{databaseAboutLength:30});
+ * |
+ * |  * this time about new text length is 20, 20 > databaseAboutLength(15), so it will throw error
+ * |
  * | Example:
  * |  ||===============================================================
- * |  || import * as base from "./base";
- * |  || import * as databaseSet from "./databaseSet";
+ * |  || import { databaseSetConfig } base from "./base";
+ * |  || import { databaseSet } from "./databaseSet";
  * |  || 
- * |  || let newConfig :base.databaseSetConfig = {
+ * |  || let newConfig :databaseSetConfig = {
  * |  ||    about : "it is new about text",
  * |  || });
  * |  ||
@@ -421,7 +421,7 @@ export type databasGetOption = {
  * |  ||
  * |  || //now the testDatabase001 database of database.json about member will be replace to "it is new about text"
  */
-export type databasSetConfig = {
+export type databaseSetConfig = {
     about?     : string,
     auth?      : boolean,
     limit?     : {
@@ -433,18 +433,17 @@ export type databasSetConfig = {
 /*
  * |-------------------------------------------------------------------
  * | About:
- * |  define databasSet.ts function option, the databasSet function like:
- * |  || function databasSet(database :string, databaseConfig: databasSetConfig, option? :databasSetOption){
+ * |  define databaesSet.ts function option, the databaseSet function like:
+ * |  || function databaseSet(database :string, databaseConfig: databaseSetConfig, option? :databaseSetOption){
  * |  ||   //TODO: database set data event
  * |  || }
  * | 
- * |  * execLimit  : in "processSystem" when working error, it will redo exec time(level 2+), execLimit default is 1
  * |  
  * | Example:
  * |  ||===============================================================
- * |  || import * as databaseSet from "./databaseSet";
+ * |  || import { databaseSet } from "./databaseSet";
  * |  || 
- * |  || let newConfig :base.databaseSetConfig = {
+ * |  || let newConfig :databaseSetConfig = {
  * |  ||    about : "it is new about text",
  * |  || });
  * |  ||
@@ -452,9 +451,8 @@ export type databasSetConfig = {
  * |  || databaseSet("testDatabase001",{about:"",auth:ture},{dataWall:["auth"]});
  * |  ||
  */
-export type databasSetOption = {
+export type databaseSetOption = {
     dataWall?  : Array<string>,
-    execLimit? : number
 };
 
 /*
@@ -465,35 +463,306 @@ export type databasSetOption = {
  * |  ||   //TODO: database copy event
  * |  || }
  * |
- * |  * execLimit : in "processSystem" when working error, it will redo exec time(level 2+), execLimit default is 1
  * |  * fsOption  : the database.json is write by fs model, so you can setting fs.mkdirSync and fs.writeFile option
  * |    * mkdirSyncOption     : follow fs.mkdirSync option
  * |    * writeFileSyncOption : follow fs.writeFileSync option
  * |
  * | Example:
  * |  ||===============================================================
- * |  || import * as databasCopy from "./databasCopy";
+ * |  || import { databaseCopy } from "./databaseCopy";
  * |  || 
  * |  || databaseCopyOption("testDatabase001","testDatabase001-Copy",{
- * |  ||    execLimit: 2
+ * |  ||    fsOption : { writeFileSyncOption: { recursive: true } }
  * |  || });
  */
 export type databaseCopyOption = {
-    execLimit? : number,
     fsOption?  : {
         mkdirSyncOption?     : fs.MakeDirectoryOptions,
         writeFileSyncOption? : fs.WriteFileOptions
     }
 };
 
-export type databaseUserCreateOption = {
-    execLimit? : number
-};
-
-export type databaseUserRemoveOption = {
-    execLimit? : number
-};
-
+/*
+ * |-------------------------------------------------------------------
+ * | About:
+ * |  define tableCreate.ts function option, the tableCreate function like:
+ * |  || function tableCreate(database :string, table :string, option? :tableCreateOption){
+ * |  ||   //TODO: table create event
+ * |  || }
+ * | 
+ * |  * tableConfig : setting table option
+ * |    * about   : table about text, default is ""
+ * |    * fileSize : one frame can save number of row data(one file to save "fileSize" row data), fileSize default is 50
+ * |    * limit   : the table.json "table" "about" text length limit
+ * |      * tableNameLength : the table name text length limit, tableNameLength default is 1024
+ * |      * tableAboutLength : the table about text length limit, tableAboutLength default is 1024
+ * |  * fsOption   : the database.json is write by fs model, so you can setting fs.mkdirSync and fs.writeFile option
+ * |    * mkdirSyncOption     : follow fs.mkdirSync option
+ * |    * writeFileSyncOption : follow fs.writeFileSync option
+ * |
+ * | Example:
+ * |  ||===============================================================
+ * |  || import { tableCreate } from "./tableCreate";
+ * |  || 
+ * |  || tableCreate("testDatabase001","testTable001",{
+ * |  ||    {
+ * |  ||        about   : "it is table about",
+ * |  ||        fileSize : 500,
+ * |  ||        limit   : {
+ * |  ||            tableNameLength  : 30,
+ * |  ||            tableAboutLength : 30,
+ * |  ||        }
+ * |  ||    }
+ * |  || });
+ * |  ||
+ */
 export type tableCreateOption = {
+    tableConfig?  : {
+        about?   : string,
+        fileSize? : number,
+        limit?   : {
+            tableNameLength?  : number,
+            tableAboutLength? : number
+        }
+    },
+    fsOption?    : {
+        mkdirSyncOption?     : fs.MakeDirectoryOptions
+        writeFileSyncOption? : fs.WriteFileOptions
+    }
+};
 
-}
+/*
+ * |-------------------------------------------------------------------
+ * | About:
+ * |  define tableRename.ts function option, the tableRename function like:
+ * |  || function tableRename(database :string, fromTable :string, toTable :string, option? :tableRenameOption){
+ * |  ||   //TODO: table rename event
+ * |  || }
+ * |
+ * |  * regexpWall : a regex as wall, any rename name will follow regex can be run, default is new RegExp(/^\s*$/)
+ * |  * fsOption   : the database.json is write by fs model, so you can setting fs.writeFile option
+ * |    * writeFileSyncOption : follow fs.writeFileSync option
+ * |  
+ * | Example:
+ * |  ||===============================================================
+ * |  || import { tableRename } from "./tableRename";
+ * |  || 
+ * |  || tableRename("testDatabase001", "testTable001", "testTable002", {
+ * |  ||    //we let user can't rename be "priate001" "priate002", we can set the wall, we will be used in level3
+ * |  ||    regexWall : new RegExp(/^(priate001|priate002)$/),
+ * |  || });
+ */
+export type tableRenameOption = {
+    regexWall?  : RegExp,
+    fsOption?   : {
+        writeFileSyncOption? : fs.WriteFileOptions
+    }
+};
+
+/*
+ * |-------------------------------------------------------------------
+ * | About:
+ * |  define tableRemove.ts function option, the tableRemove function like:
+ * |  || function tableRemove(database :string, table :string, option? :tableRemoveOption){
+ * |  ||   //TODO: table remove event
+ * |  || }
+ * |
+ * |  * dataWall      : a string array as wall, just like we get info from table.json and not show some data
+ * |  * cleanFileLock : it is a protect flag, when database has anyone table, it can't be remove, however cleanFileLock === ture, it will do
+ * |  * fsOption      : the database.json is write by fs model, so you can setting fs.writeFile option
+ * |    * rmSyncOption : follow fs.RmOptions option
+ * |  
+ * | Example:
+ * |  ||===============================================================
+ * |  || import { tableRemove } from "./tableRemove";
+ * |  || 
+ * |  || databaseRemove("testDatabase001","testTable001",{
+ * |  ||    //we let user can't reomve be "priate001" "priate002",we can set the wall, we will be used in level3
+ * |  ||    regexWall     : new RegExp(/^(priate001|priate002)$/),
+ * |  ||    cleanFileLock : true,
+ * |  || });
+ */
+export type tableRemoveOption = {
+    dataWall?     : Array<String>,
+    cleanFileLock : boolean, 
+    fsOption      : {
+        rmdirSyncOption?     : fs.RmDirOptions
+        writeFileSyncOption? : fs.WriteFileOptions
+    }
+};
+
+/*
+ * |-------------------------------------------------------------------
+ * | About:
+ * |  define tableGet.ts function option, the tableGet function like:
+ * |  || function tableGet(database :string, table :string, option? :tableGetOption){
+ * |  ||   //TODO: database get data event
+ * |  || }
+ * |
+ * |  * dataWall   : a string array as wall, just like we get info from table.json and not show some data
+ * |  
+ * | Example:
+ * |  ||===============================================================
+ * |  || import { tableGet } from "./tableGet";
+ * |  || 
+ * |  || tableGet("testDatabase001", "testTable001"{
+ * |  ||    //we let user can't get database.json of "about" "userList" "limit", we can set the wall, we will be used in level3
+ * |  ||    regexWall : new RegExp(/^(date|time|limit)$/),
+ * |  || });
+ * |  ||
+ * |  || // user will be get 
+ * |  || // {
+ * |  || //   table   : "testDatabase001",
+ * |  || //   forDB   : true,
+ * |  || //   fileSize : 50,
+ * |  || // }
+ */
+export type tableGetOption = {
+    dataWall?  : Array<String>,
+};
+
+/*
+ * |-------------------------------------------------------------------
+ * | About:
+ * |  define tableSet.ts function option, the tableSet function like:
+ * |  || function tableSet(database :string, table :string, setConfig :tableSetConfig, option? :tableSetOption){
+ * |  ||   //TODO: table set data event
+ * |  || }
+ * |  it just follow tableCreate.option, but this setting will be replace, so please don't replcae ohter member, just like asign "" or 0
+ * |
+ * |  * about : change table.json about text input, default is not be change
+ * |  * limit : table.json some mumber limit
+ * |    * tableNameLength  : change table.json name text can input max size, default is not be change 
+ * |    * tableAboutLength : change table.json about text can input max size, but it will change after this procese, default is not be change
+ * | 
+ * |  * before time:
+ * |    * about is "AAAAAAAAAA" and tableAboutLength is 15
+ * |
+ * |  * when we change the about text and change tableAboutLength:
+ * |    databaseSet("testDatabase001","testTable001",{about:"12345678901234567890",limit:{tableAboutLength:30});
+ * |
+ * |  * this time about new text length is 20, 20 > tableAboutLength(15), so it will throw error
+ * |
+ * | Example:
+ * |  ||===============================================================
+ * |  || import { tableSetConfig } base from "./base";
+ * |  || import { tableSet } from "./tableSet";
+ * |  || 
+ * |  || let newConfig :tableSetConfig = {
+ * |  ||    about : "it is new about text",
+ * |  || });
+ * |  ||
+ * |  || tableSet("testDatabase001","testTable001",newConfig);
+ * |  ||
+ * |  || //now the testDatabase001 of testTable001 of table.json about member will be replace to "it is new about text"
+ */
+export type tableSetConfig = {
+    about?     : string,
+    limit?     : {
+        tableNameLength?  : number,
+        tableAboutLength? : number,
+    }
+};
+
+/*
+ * |-------------------------------------------------------------------
+ * | About:
+ * |  define tableSet.ts function option, the tableSet function like:
+ * |  || function tableSet(database :string, table :string, setConfig :tableSetConfig, option? :tableSetOption){
+ * |  ||   //TODO: table set data event
+ * |  || }
+ * |
+ * |  * dataWall  : a string array as wall, just like we get info from table.json and not show some data
+ * |  
+ * | Example:
+ * |  ||===============================================================
+ * |  || import { tableGet } from "./tableGet";
+ * |  || 
+ * |  || tableGet("testDatabase001", "testTable001"{
+ * |  ||    //we let user can't get table.json of "about" "userList" "limit", we can set the wall, we will be used in level3
+ * |  ||    regexWall : new RegExp(/^(date|time|limit)$/),
+ * |  || });
+ * |  ||
+ * |  || // user will be get 
+ * |  || // {
+ * |  || //   table   : "testDatabase001",
+ * |  || //   forDB   : true,
+ * |  || //   fileSize : 50,
+ * |  || // }
+ */
+export type tableSetOption = {
+    dataWall?  : Array<string>
+};
+
+export type tableCopyOption = {
+    
+};
+
+export type tableCopyToDatabaseOption = {
+    
+};
+
+export type tableConcatOption = {
+    
+};
+
+export type tableReSizeOption = {
+    maxMax?  : number,
+    minSize? : number,
+};
+
+export type dataInsertOption = {
+
+};
+
+export type dataMultInsertOption = {
+    
+};
+
+export type dataDeleteOption = {
+    
+};
+
+export type dataMultDeleteOption = {
+    
+};
+
+export type dataSearchOption = {
+    
+};
+
+export type dataMultSearchOption = {
+    
+};
+
+export type dataUpdateOption = {
+    
+};
+
+export type dataMultUpdateOption = {
+    
+};
+
+export type dataSortOption = {
+    
+};
+
+export type dataMultSortOption = {
+    
+};
+
+export type dataMaxMinOption = {
+    
+};
+
+export type dataMaxMinSortOption = {
+    
+};
+
+export type dataCountOption = {
+    
+};
+
+export type dataJoinOption = {
+    
+};
